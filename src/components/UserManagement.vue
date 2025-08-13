@@ -5,7 +5,7 @@
       <h2 class="text-2xl font-bold text-gray-900">Gestión de Usuarios</h2>
       <Button @click="openCreateModal" class="bg-blue-600 hover:bg-blue-700">
         <Plus class="w-4 h-4 mr-2" />
-        Nuevo Usuario
+        Invitar Usuario
       </Button>
     </div>
 
@@ -26,8 +26,10 @@
         class="block border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <option value="">Todos los estados</option>
-        <option value="true">Activos</option>
-        <option value="false">Inactivos</option>
+        <option value="1">Activos</option>
+        <option value="0">Bloqueados</option>
+        <option value="2">Eliminados</option>
+        <option value="3">Pendientes</option>
       </select>
     </div>
 
@@ -74,15 +76,7 @@
               {{ user.department || '-' }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span 
-                :class="{
-                  'bg-green-100 text-green-800': user.is_active,
-                  'bg-yellow-100 text-yellow-800': !user.is_active
-                }"
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-              >
-                {{ getUserStatusLabel(user) }}
-              </span>
+              <UserStatusBadge :status="user.user_state" />
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <div class="flex justify-end space-x-2">
@@ -94,10 +88,10 @@
                 >
                   <Edit class="w-4 h-4" />
                 </Button>
-                
+
                 <!-- Botones de estado -->
                 <Button
-                  v-if="user.is_active"
+                  v-if="user.user_state === UserStatus.ACTIVE"
                   @click="blockUser(user)"
                   variant="ghost"
                   size="sm"
@@ -106,9 +100,9 @@
                 >
                   <UserX class="w-4 h-4" />
                 </Button>
-                
+
                 <Button
-                  v-if="!user.is_active"
+                  v-if="user.user_state === UserStatus.BLOCKED"
                   @click="activateUser(user)"
                   variant="ghost"
                   size="sm"
@@ -116,6 +110,17 @@
                   title="Activar usuario"
                 >
                   <UserCheck class="w-4 h-4" />
+                </Button>
+
+                <Button
+                  v-if="user.user_state !== UserStatus.DELETED"
+                  @click="deleteUser(user)"
+                  variant="ghost"
+                  size="sm"
+                  class="text-red-600 hover:text-red-900"
+                  title="Eliminar usuario"
+                >
+                  <Trash2 class="w-4 h-4" />
                 </Button>
               </div>
             </td>
@@ -150,13 +155,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { Plus, Edit, Users, UserX, UserCheck } from 'lucide-vue-next'
+import { Plus, Edit, Users, UserX, UserCheck, Trash2 } from 'lucide-vue-next'
 import { userService } from '@/services/userService'
 import type { UserProfile, Role } from '@/types/projects'
 import { UserStatus, USER_STATUS_LABELS } from '@/types/index'
 import Button from '@/components/ui/button/Button.vue'
 import UserModal from './UserModal.vue'
 import RoleBadge from './RoleBadge.vue'
+import UserStatusBadge from './UserStatusBadge.vue'
 
 const users = ref<UserProfile[]>([])
 const availableRoles = ref<Role[]>([])
@@ -173,8 +179,8 @@ const filteredUsers = computed(() => {
   }
 
   if (statusFilter.value !== '') {
-    const isActive = statusFilter.value === 'true'
-    filtered = filtered.filter(u => u.is_active === isActive)
+    const statusValue = parseInt(statusFilter.value)
+    filtered = filtered.filter(u => u.user_state === statusValue)
   }
 
   return filtered
@@ -227,7 +233,7 @@ const changeUserStatus = async (user: UserProfile, newStatus: UserStatus, reason
   const confirmed = confirm(
     `¿Estás seguro de cambiar el estado de ${user.full_name} a "${statusLabel}"?${reason ? `\n\nRazón: ${reason}` : ''}`
   )
-  
+
   if (!confirmed) return
 
   try {
@@ -255,15 +261,6 @@ const deleteUser = (user: UserProfile) => {
   const reason = prompt('Razón para eliminar el usuario (opcional):')
   if (reason !== null) { // Solo proceder si no canceló
     changeUserStatus(user, UserStatus.DELETED, reason || 'Usuario eliminado desde gestión')
-  }
-}
-
-// Obtener label del estado
-const getUserStatusLabel = (user: UserProfile): string => {
-  if (user.is_active) {
-    return USER_STATUS_LABELS[UserStatus.ACTIVE]
-  } else {
-    return USER_STATUS_LABELS[UserStatus.BLOCKED]
   }
 }
 

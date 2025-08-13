@@ -5,7 +5,7 @@ import { projectService } from '@/services/projectService'
 import type { ProjectWithAssignments } from '@/types/projects'
 import Button from '@/components/ui/button/Button.vue'
 import ProjectModal from './ProjectModal.vue'
-import StatusBadge from './StatusBadge.vue'
+import ProjectStatusBadge from './ProjectStatusBadge.vue'
 
 const projects = ref<ProjectWithAssignments[]>([])
 const availableJPs = ref<Array<{ id: string; full_name: string; email: string }>>([])
@@ -94,10 +94,10 @@ onMounted(() => {
         class="block border border-gray-300 rounded-md px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <option value="">Todos los estados</option>
-        <option value="active">Activos</option>
-        <option value="paused">Pausados</option>
-        <option value="completed">Completados</option>
-        <option value="cancelled">Cancelados</option>
+        <option value="active">🟢 Activos</option>
+        <option value="paused">🟡 Pausados</option>
+        <option value="completed">🔵 Completados</option>
+        <option value="cancelled">🔴 Cancelados</option>
       </select>
     </div>
 
@@ -138,7 +138,7 @@ onMounted(() => {
               {{ project.code }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <StatusBadge :status="project.status" />
+              <ProjectStatusBadge :status="project.status" />
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex -space-x-1">
@@ -148,9 +148,18 @@ onMounted(() => {
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-              <div v-if="project.start_date">{{ formatDate(project.start_date) }}</div>
-              <div v-if="project.end_date" class="text-gray-500">
-                {{ formatDate(project.end_date) }}
+              <div v-if="project.start_date || project.end_date">
+                <div v-if="project.start_date" class="flex items-center">
+                  <span class="text-xs text-gray-500 mr-1">Inicio:</span>
+                  <span>{{ formatDate(project.start_date) }}</span>
+                </div>
+                <div v-if="project.end_date" class="flex items-center">
+                  <span class="text-xs text-gray-500 mr-1">Fin:</span>
+                  <span>{{ formatDate(project.end_date) }}</span>
+                </div>
+              </div>
+              <div v-else class="text-gray-400 italic text-xs">
+                Sin fechas definidas
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

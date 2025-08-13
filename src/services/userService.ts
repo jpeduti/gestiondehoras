@@ -174,6 +174,71 @@ export const userService = {
     return this.createUser(userData)
   },
 
+  // Invitar nuevo usuario (crea perfil pendiente)
+  async inviteUser(userData: {
+    email: string
+    full_name: string
+    role_id: string
+    department?: string
+    employee_id?: string
+  }): Promise<{success: boolean, data?: UserProfile, error?: string}> {
+    const { data, error } = await supabase.rpc('invite_user' as any, {
+      user_email: userData.email,
+      user_full_name: userData.full_name,
+      user_role_id: userData.role_id,
+      user_department: userData.department || null,
+      user_employee_id: userData.employee_id || null
+    })
+
+    if (error) {
+      console.error('Error inviting user:', error)
+      return { success: false, error: error.message }
+    }
+
+    return data as {success: boolean, data?: UserProfile, error?: string}
+  },
+
+  // Crear perfil para usuario existente en auth
+  async createProfileForAuthUser(userData: {
+    auth_user_id: string
+    email: string
+    full_name: string
+    role_id: string
+    department?: string
+    employee_id?: string
+  }): Promise<{success: boolean, data?: UserProfile, error?: string}> {
+    const { data, error } = await supabase.rpc('create_user_profile_safe' as any, {
+      auth_user_id: userData.auth_user_id,
+      user_email: userData.email,
+      user_full_name: userData.full_name,
+      user_role_id: userData.role_id,
+      user_department: userData.department || null,
+      user_employee_id: userData.employee_id || null
+    })
+
+    if (error) {
+      console.error('Error creating profile:', error)
+      return { success: false, error: error.message }
+    }
+
+    return data as {success: boolean, data?: UserProfile, error?: string}
+  },
+
+  // Activar usuario invitado que se registró
+  async activateInvitedUser(authUserId: string, email: string): Promise<{success: boolean, data?: UserProfile, error?: string}> {
+    const { data, error } = await supabase.rpc('activate_invited_user' as any, {
+      auth_user_id: authUserId,
+      user_email: email
+    })
+
+    if (error) {
+      console.error('Error activating invited user:', error)
+      return { success: false, error: error.message }
+    }
+
+    return data as {success: boolean, data?: UserProfile, error?: string}
+  },
+
   // Cambiar estado del usuario
   async changeUserStatus(userId: string, newStatus: UserStatus): Promise<UserProfile> {
     const { data, error } = await supabase

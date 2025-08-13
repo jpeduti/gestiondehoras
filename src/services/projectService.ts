@@ -17,7 +17,7 @@ export const projectService = {
         created_by_profile:user_profiles!projects_created_by_fkey(
           id, full_name, email, employee_id
         ),
-        assignments:project_assignments!inner(
+        assignments:project_assignments(
           id,
           jp_id,
           assigned_at,
@@ -27,7 +27,6 @@ export const projectService = {
           )
         )
       `)
-      .eq('project_assignments.is_active', true)
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -54,7 +53,6 @@ export const projectService = {
         )
       `)
       .eq('id', id)
-      .eq('project_assignments.is_active', true)
       .single()
 
     if (error) throw error
@@ -155,7 +153,7 @@ export const projectService = {
         *,
         role:roles(name)
       `)
-      .eq('is_active', true)
+      .eq('user_state', 1) // 1 = ACTIVE (reemplaza is_active = true)
       .eq('roles.name', 'jp')
 
     if (error) throw error
@@ -170,7 +168,7 @@ export const projectService = {
         *
       `)
       .eq('project_assignments.jp_id', jpId)
-      .eq('project_assignments.is_active', true)
+      .eq('project_assignments.is_active', true) // Este is_active SÍ existe en project_assignments
       .in('status', ['active', 'paused'])
 
     if (error) throw error

@@ -3,7 +3,7 @@
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
       <div class="mt-3">
         <h3 class="text-lg font-medium text-gray-900 mb-4">
-          {{ isEditing ? 'Editar Usuario' : 'Nuevo Usuario' }}
+          {{ isEditing ? 'Editar Usuario' : 'Invitar Nuevo Usuario' }}
         </h3>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
@@ -74,11 +74,13 @@
           <div v-if="isEditing">
             <label class="block text-sm font-medium text-gray-700">Estado</label>
             <select
-              v-model="form.is_active"
+              v-model="form.user_state"
               class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option :value="true">Activo</option>
-              <option :value="false">Inactivo</option>
+              <option :value="1">Activo</option>
+              <option :value="0">Bloqueado</option>
+              <option :value="2">Eliminado</option>
+              <option :value="3">Pendiente</option>
             </select>
           </div>
 
@@ -122,7 +124,7 @@ const form = ref({
   email: '',
   role_id: '',
   department: '',
-  is_active: true
+  user_state: 1
 })
 
 const isEditing = computed(() => !!props.user)
@@ -138,13 +140,23 @@ const handleSubmit = async () => {
         email: form.value.email,
         role_id: form.value.role_id,
         department: form.value.department,
-        is_active: form.value.is_active
+        user_state: form.value.user_state
       })
     } else {
-      // Crear nuevo usuario
-      // Generar un ID temporal para el usuario (en producción esto vendría de auth)
-      form.value.id = crypto.randomUUID()
-      await userService.createUserProfile(form.value)
+      // Invitar nuevo usuario (crea perfil pendiente)
+      const result = await userService.inviteUser({
+        email: form.value.email,
+        full_name: form.value.full_name,
+        role_id: form.value.role_id,
+        department: form.value.department,
+        employee_id: form.value.employee_id
+      })
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error al invitar usuario')
+      }
+
+      alert('Usuario invitado exitosamente. Se ha creado una invitación pendiente. El usuario debe registrarse en el sistema para activar su cuenta.')
     }
     emit('save')
   } catch (error) {
@@ -164,7 +176,7 @@ onMounted(() => {
       email: props.user.email,
       role_id: props.user.role_id,
       department: props.user.department || '',
-      is_active: props.user.is_active || false
+      user_state: props.user.user_state || 1
     }
   }
 })

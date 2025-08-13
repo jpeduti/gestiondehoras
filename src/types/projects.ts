@@ -85,6 +85,7 @@ export interface CreateProjectDto {
   code: string
   name: string
   description?: string
+  status: 'active' | 'paused' | 'completed' | 'cancelled'
   start_date?: string
   end_date?: string
   assigned_jps?: string[]
