@@ -45,6 +45,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "project_assignments_jp_id_fkey"
+            columns: ["jp_id"]
+            isOneToOne: false
+            referencedRelation: "users_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_assignments_jp_id_fkey"
+            columns: ["jp_id"]
+            isOneToOne: false
+            referencedRelation: "users_blocked"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_assignments_jp_id_fkey"
+            columns: ["jp_id"]
+            isOneToOne: false
+            referencedRelation: "users_deleted"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "project_assignments_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -98,6 +119,27 @@ export type Database = {
             referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_blocked"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_deleted"
+            referencedColumns: ["id"]
+          },
         ]
       }
       roles: {
@@ -131,7 +173,8 @@ export type Database = {
           hours: number
           id: string
           jp_id: string
-          project_id: string
+          other_activity: string | null
+          project_id: string | null
           status: string | null
           updated_at: string | null
           week_start: string
@@ -142,7 +185,8 @@ export type Database = {
           hours: number
           id?: string
           jp_id: string
-          project_id: string
+          other_activity?: string | null
+          project_id?: string | null
           status?: string | null
           updated_at?: string | null
           week_start: string
@@ -153,7 +197,8 @@ export type Database = {
           hours?: number
           id?: string
           jp_id?: string
-          project_id?: string
+          other_activity?: string | null
+          project_id?: string | null
           status?: string | null
           updated_at?: string | null
           week_start?: string
@@ -164,6 +209,27 @@ export type Database = {
             columns: ["jp_id"]
             isOneToOne: false
             referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_jp_id_fkey"
+            columns: ["jp_id"]
+            isOneToOne: false
+            referencedRelation: "users_active"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_jp_id_fkey"
+            columns: ["jp_id"]
+            isOneToOne: false
+            referencedRelation: "users_blocked"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_jp_id_fkey"
+            columns: ["jp_id"]
+            isOneToOne: false
+            referencedRelation: "users_deleted"
             referencedColumns: ["id"]
           },
           {
@@ -186,6 +252,7 @@ export type Database = {
           is_active: boolean | null
           role_id: string
           updated_at: string | null
+          user_state: number | null
         }
         Insert: {
           created_at?: string | null
@@ -197,6 +264,7 @@ export type Database = {
           is_active?: boolean | null
           role_id: string
           updated_at?: string | null
+          user_state?: number | null
         }
         Update: {
           created_at?: string | null
@@ -208,6 +276,7 @@ export type Database = {
           is_active?: boolean | null
           role_id?: string
           updated_at?: string | null
+          user_state?: number | null
         }
         Relationships: [
           {
@@ -221,10 +290,153 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      users_active: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string | null
+          employee_id: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          role_id: string | null
+          updated_at: string | null
+          user_state: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          role_id?: string | null
+          updated_at?: string | null
+          user_state?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          role_id?: string | null
+          updated_at?: string | null
+          user_state?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users_blocked: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string | null
+          employee_id: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          role_id: string | null
+          updated_at: string | null
+          user_state: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          role_id?: string | null
+          updated_at?: string | null
+          user_state?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          role_id?: string | null
+          updated_at?: string | null
+          user_state?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users_deleted: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string | null
+          employee_id: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          role_id: string | null
+          updated_at: string | null
+          user_state: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          role_id?: string | null
+          updated_at?: string | null
+          user_state?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          role_id?: string | null
+          updated_at?: string | null
+          user_state?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
-      [_ in never]: never
+      get_is_active: {
+        Args: { state: number }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

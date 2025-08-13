@@ -1,135 +1,119 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, LogIn, Building2 } from 'lucide-vue-next'
-import { supabase } from '@/services/supabase'
+import { onMounted, ref, computed } from 'vue'
+import LoadingScreen from '@/components/LoadingScreen.vue'
+import LoginForm from '@/components/LoginForm.vue'
+import DashboardLayout from '@/components/DashboardLayout.vue'
+import { authService, type LoginCredentials } from '@/services/auth'
+import type { User } from '@supabase/supabase-js'
 
-const email = ref('')
-const password = ref('')
-const loading = ref(false)
-const error = ref('')
+// Estado de la aplicación
+const user = ref<User | null>(null)
+const loading = ref(true)
+const loginLoading = ref(false)
+const loginError = ref('')
 
-const handleLogin = async () => {
-  if (!email.value || !password.value) {
-    error.value = 'Por favor completa todos los campos'
-    return
+// Determinar rol del usuario (temporal - en producción vendría de la base de datos)
+const userRole = computed(() => {
+  if (!user.value) return 'jp'
+
+  // Por ahora, determinar rol basado en el email
+  const email = user.value.email || ''
+
+  if (email.includes('admin') || email === 'admin@uniacc.cl') {
+    return 'admin'
+  } else if (email.includes('director')) {
+    return 'director'
+  } else {
+    return 'jp'
   }
+})
 
+// Formatear user para el componente
+const userFormatted = computed(() => {
+  if (!user.value) return null
+  return {
+    email: user.value.email || '',
+    id: user.value.id
+  }
+})
+
+// Inicializar aplicación
+const initApp = async () => {
   try {
-    loading.value = true
-    error.value = ''
+    const session = await authService.getSession()
+    user.value = session?.user || null
 
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: email.value,
-      password: password.value
-    })
-
-    if (authError) throw authError
-
-    console.log('✅ Login exitoso:', data.user?.email)
-    // El App.vue se encargará de mostrar el dashboard
-
-  } catch (err: any) {
-    error.value = err.message || 'Error al iniciar sesión'
-    console.error('❌ Error login:', err)
+    console.log('App inicializada:', session?.user?.email || 'No autenticado')
+  } catch (error) {
+    console.error('Error inicializando app:', error)
   } finally {
     loading.value = false
   }
 }
+
+// Manejar login
+const handleLogin = async (credentials: LoginCredentials) => {
+  try {
+    loginLoading.value = true
+    loginError.value = ''
+
+    const result = await authService.signIn(credentials)
+    user.value = result.user
+
+    console.log('✅ Login exitoso:', result.user?.email)
+  } catch (error: unknown) {
+    loginError.value = (error as Error).message || 'Error al iniciar sesión'
+    console.error('❌ Error login:', error)
+  } finally {
+    loginLoading.value = false
+  }
+}
+
+// Manejar logout
+const handleLogout = async () => {
+  try {
+    await authService.signOut()
+    user.value = null
+    console.log('✅ Logout exitoso')
+  } catch (error) {
+    console.error('❌ Error logout:', error)
+  }
+}
+
+// Escuchar cambios de autenticación
+authService.onAuthStateChange((event, session) => {
+  user.value = session?.user || null
+  console.log('🔄 Auth cambió:', event, session?.user?.email || 'Desconectado')
+})
+
+// Inicializar al montar
+onMounted(() => {
+  initApp()
+})
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-    <div class="max-w-md w-full">
-      <!-- Header -->
-      <div class="text-center mb-8">
-        <div class="flex justify-center mb-4">
-          <Building2 class="h-12 w-12 text-blue-600" />
-        </div>
-        <h2 class="text-3xl font-bold text-gray-900">
-          Gestión de Horas UNIACC
-        </h2>
-        <p class="mt-2 text-sm text-gray-600">
-          Sistema de registro de horas - Transformación Digital
-        </p>
-      </div>
+  <div id="app">
+    <!-- Estado: Cargando -->
+    <LoadingScreen
+      v-if="loading"
+      message="Inicializando aplicación..."
+    />
 
-      <!-- Login Card -->
-      <Card>
-        <CardHeader>
-          <CardTitle class="flex items-center gap-2">
-            <LogIn class="h-5 w-5" />
-            Iniciar Sesión
-          </CardTitle>
-          <CardDescription>
-            Accede con tus credenciales institucionales
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form @submit.prevent="handleLogin" class="space-y-4">
-            <!-- Error Alert -->
-            <Alert v-if="error" variant="destructive">
-              <AlertDescription>{{ error }}</AlertDescription>
-            </Alert>
+    <!-- Estado: No autenticado -->
+    <LoginForm
+      v-else-if="!user"
+      :loading="loginLoading"
+      :error="loginError"
+      @login="handleLogin"
+    />
 
-            <!-- Email Field -->
-            <div class="space-y-2">
-              <Label for="email">Email Institucional</Label>
-              <Input
-                id="email"
-                v-model="email"
-                type="email"
-                placeholder="nombre.apellido@uniacc.cl"
-                :disabled="loading"
-                required
-              />
-            </div>
-
-            <!-- Password Field -->
-            <div class="space-y-2">
-              <Label for="password">Contraseña</Label>
-              <Input
-                id="password"
-                v-model="password"
-                type="password"
-                placeholder="••••••••"
-                :disabled="loading"
-                required
-              />
-            </div>
-
-            <!-- Login Button -->
-            <Button
-              type="submit"
-              class="w-full"
-              :disabled="loading"
-            >
-              <Loader2 v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
-              {{ loading ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
-            </Button>
-          </form>
-
-          <!-- Demo Credentials -->
-          <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p class="text-sm font-medium text-blue-900 mb-2">
-              🧪 Credenciales de prueba (MVP)
-            </p>
-            <div class="text-xs text-blue-700 space-y-1">
-              <p><strong>Email:</strong> admin@uniacc.cl</p>
-              <p><strong>Password:</strong> 123456789</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- Footer -->
-      <div class="mt-8 text-center text-xs text-gray-500">
-        Universidad UNIACC - Área de Transformación Digital
-      </div>
-    </div>
+    <!-- Estado: Autenticado -->
+    <DashboardLayout
+      v-else-if="user && userFormatted"
+      :user="userFormatted"
+      :user-role="userRole"
+      @logout="handleLogout"
+    />
   </div>
 </template>
