@@ -3,10 +3,42 @@
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
       <div class="mt-3">
         <h3 class="text-lg font-medium text-gray-900 mb-4">
-          {{ isEditing ? 'Editar Usuario' : 'Invitar Nuevo Usuario' }}
+          {{ isEditing ? 'Editar Usuario' : 'Crear Nuevo Usuario' }}
         </h3>
 
         <form @submit.prevent="handleSubmit" class="space-y-4">
+          <!-- Tipo de Usuario (solo en creación) -->
+          <div v-if="!isEditing">
+            <label class="block text-sm font-medium text-gray-700">Tipo de Usuario *</label>
+            <select
+              v-model="userType"
+              required
+              class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="invite">Invitar Usuario (sin contraseña)</option>
+              <option value="complete">Crear Usuario Completo (con contraseña)</option>
+            </select>
+            <p class="mt-1 text-xs text-gray-500">
+              {{ userType === 'invite'
+                ? 'El usuario recibirá una invitación y deberá completar su registro'
+                : 'El usuario se creará con contraseña y podrá acceder inmediatamente'
+              }}
+            </p>
+          </div>
+
+          <!-- Contraseña (solo para usuario completo) -->
+          <div v-if="!isEditing && userType === 'complete'">
+            <label class="block text-sm font-medium text-gray-700">Contraseña *</label>
+            <input
+              v-model="form.password"
+              type="password"
+              required
+              minlength="6"
+              placeholder="Mínimo 6 caracteres"
+              class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           <!-- ID Empleado -->
           <div>
             <label class="block text-sm font-medium text-gray-700">ID Empleado</label>
@@ -117,11 +149,13 @@ const emit = defineEmits<{
 }>()
 
 const loading = ref(false)
+const userType = ref('invite') // Tipo de usuario por defecto
 const form = ref({
   id: '',
   employee_id: '',
   full_name: '',
   email: '',
+  password: '', // Contraseña para usuario completo
   role_id: '',
   department: '',
   user_state: 1
@@ -143,20 +177,41 @@ const handleSubmit = async () => {
         user_state: form.value.user_state
       })
     } else {
-      // Invitar nuevo usuario (crea perfil pendiente)
-      const result = await userService.inviteUser({
-        email: form.value.email,
-        full_name: form.value.full_name,
-        role_id: form.value.role_id,
-        department: form.value.department,
-        employee_id: form.value.employee_id
-      })
+      // Crear nuevo usuario según el tipo seleccionado
+      let result
 
-      if (!result.success) {
-        throw new Error(result.error || 'Error al invitar usuario')
+      if (userType.value === 'complete') {
+        // Crear usuario completo con contraseña
+        result = await userService.createUserWithAuth({
+          email: form.value.email,
+          password: form.value.password,
+          full_name: form.value.full_name,
+          role_id: form.value.role_id,
+          department: form.value.department,
+          employee_id: form.value.employee_id
+        })
+
+        if (!result.success) {
+          throw new Error(result.error || 'Error al crear usuario')
+        }
+
+        alert('Usuario creado exitosamente. El usuario puede acceder al sistema inmediatamente con su email y contraseña.')
+      } else {
+        // Invitar usuario (crea perfil pendiente)
+        result = await userService.inviteUserToSystem({
+          email: form.value.email,
+          full_name: form.value.full_name,
+          role_id: form.value.role_id,
+          department: form.value.department,
+          employee_id: form.value.employee_id
+        })
+
+        if (!result.success) {
+          throw new Error(result.error || 'Error al invitar usuario')
+        }
+
+        alert('Usuario invitado exitosamente. Se ha creado una invitación pendiente. El usuario debe registrarse en el sistema para activar su cuenta.')
       }
-
-      alert('Usuario invitado exitosamente. Se ha creado una invitación pendiente. El usuario debe registrarse en el sistema para activar su cuenta.')
     }
     emit('save')
   } catch (error) {
@@ -174,6 +229,7 @@ onMounted(() => {
       employee_id: props.user.employee_id || '',
       full_name: props.user.full_name,
       email: props.user.email,
+      password: '', // No hay contraseña en edición
       role_id: props.user.role_id,
       department: props.user.department || '',
       user_state: props.user.user_state || 1

@@ -89,10 +89,10 @@
             </div>
           </div>
 
-          <!-- JPs Asignados -->
+          <!-- Usuarios Asignados -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">JPs Asignados</label>
-            <p class="text-xs text-gray-500 mb-2">Selecciona los Jefes de Proyecto que trabajarán en este proyecto</p>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Usuarios Asignados</label>
+            <p class="text-xs text-gray-500 mb-2">Selecciona los usuarios que trabajarán en este proyecto (JPs, Directores, Admins)</p>
 
             <div v-if="availableJps.length === 0" class="text-sm text-gray-500 italic">
               No hay JPs disponibles para asignar
@@ -116,7 +116,7 @@
             </div>
 
             <p class="mt-1 text-xs text-gray-500">
-              {{ form.assigned_jps.length }} JP(s) seleccionado(s)
+              {{ form.assigned_jps.length }} usuario(s) seleccionado(s)
             </p>
           </div>
 

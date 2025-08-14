@@ -4,6 +4,7 @@ import LoadingScreen from '@/components/LoadingScreen.vue'
 import LoginForm from '@/components/LoginForm.vue'
 import DashboardLayout from '@/components/DashboardLayout.vue'
 import { authService, type LoginCredentials } from '@/services/auth'
+import { supabase } from '@/services/supabase'
 import type { User } from '@supabase/supabase-js'
 
 // Estado de la aplicación
@@ -12,21 +13,43 @@ const loading = ref(true)
 const loginLoading = ref(false)
 const loginError = ref('')
 
-// Determinar rol del usuario (temporal - en producción vendría de la base de datos)
-const userRole = computed(() => {
-  if (!user.value) return 'jp'
+// Determinar rol del usuario desde la base de datos
+const userRole = ref('jp')
+const userProfile = ref<{
+  id: string
+  email: string
+  full_name: string
+  role: { name: string; description: string | null }
+} | null>(null)
 
-  // Por ahora, determinar rol basado en el email
-  const email = user.value.email || ''
+// Función para obtener el perfil del usuario
+const fetchUserProfile = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select(`
+        *,
+        role:roles(
+          id,
+          name,
+          description
+        )
+      `)
+      .eq('id', userId)
+      .single()
 
-  if (email.includes('admin') || email === 'admin@uniacc.cl') {
-    return 'admin'
-  } else if (email.includes('director')) {
-    return 'director'
-  } else {
-    return 'jp'
+    if (error) {
+      console.error('Error fetching user profile:', error)
+      return
+    }
+
+    userProfile.value = data
+    userRole.value = data.role?.name || 'jp'
+    console.log('👤 Perfil del usuario cargado:', data.role?.name)
+  } catch (error) {
+    console.error('Error fetching user profile:', error)
   }
-})
+}
 
 // Formatear user para el componente
 const userFormatted = computed(() => {
@@ -42,6 +65,11 @@ const initApp = async () => {
   try {
     const session = await authService.getSession()
     user.value = session?.user || null
+
+    // Si hay usuario, obtener su perfil
+    if (session?.user) {
+      await fetchUserProfile(session.user.id)
+    }
 
     console.log('App inicializada:', session?.user?.email || 'No autenticado')
   } catch (error) {
@@ -59,6 +87,11 @@ const handleLogin = async (credentials: LoginCredentials) => {
 
     const result = await authService.signIn(credentials)
     user.value = result.user
+
+    // Obtener perfil del usuario después del login
+    if (result.user) {
+      await fetchUserProfile(result.user.id)
+    }
 
     console.log('✅ Login exitoso:', result.user?.email)
   } catch (error: unknown) {
@@ -81,8 +114,17 @@ const handleLogout = async () => {
 }
 
 // Escuchar cambios de autenticación
-authService.onAuthStateChange((event, session) => {
+authService.onAuthStateChange(async (event, session) => {
   user.value = session?.user || null
+
+  // Si hay usuario, obtener su perfil
+  if (session?.user) {
+    await fetchUserProfile(session.user.id)
+  } else {
+    userRole.value = 'jp'
+    userProfile.value = null
+  }
+
   console.log('🔄 Auth cambió:', event, session?.user?.email || 'Desconectado')
 })
 

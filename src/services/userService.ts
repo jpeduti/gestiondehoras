@@ -162,7 +162,7 @@ export const userService = {
     return this.updateUser(id, updates)
   },
 
-  // Alias para compatibilidad  
+  // Alias para compatibilidad
   async createUserProfile(userData: {
     id: string
     email: string
@@ -376,6 +376,142 @@ export const userService = {
   // Helper para compatibilidad: obtener is_active desde user_state
   isUserActive(user: Pick<UserProfile, 'user_state'>): boolean {
     return user.user_state === UserStatus.ACTIVE
+  },
+
+  // Crear usuario completo con Supabase Auth + perfil
+  async createUserWithAuth(userData: {
+    email: string
+    password: string
+    full_name: string
+    role_id: string
+    department?: string
+    employee_id?: string
+  }): Promise<{success: boolean, data?: UserProfile, error?: string}> {
+    try {
+      // 1. Crear usuario en Supabase Auth usando signUp
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            full_name: userData.full_name,
+            department: userData.department,
+            employee_id: userData.employee_id,
+            role_id: userData.role_id
+          }
+        }
+      })
+
+      if (authError) {
+        console.error('Error creating auth user:', authError)
+        return { success: false, error: authError.message }
+      }
+
+      if (!authData.user) {
+        return { success: false, error: 'No se pudo crear el usuario en Auth' }
+      }
+
+      // 2. Crear perfil en user_profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: authData.user.id,
+          email: userData.email,
+          full_name: userData.full_name,
+          role_id: userData.role_id,
+          department: userData.department || null,
+          employee_id: userData.employee_id || null,
+          user_state: UserStatus.ACTIVE
+        })
+        .select(`
+          *,
+          role:roles(
+            id,
+            name,
+            description,
+            permissions
+          )
+        `)
+        .single()
+
+      if (profileError) {
+        console.error('Error creating user profile:', profileError)
+        return { success: false, error: profileError.message }
+      }
+
+      return { success: true, data: profileData as UserProfile }
+    } catch (error) {
+      console.error('Unexpected error creating user:', error)
+      return { success: false, error: 'Error inesperado al crear usuario' }
+    }
+  },
+
+  // Crear usuario invitado usando Magic Link
+  async inviteUserToSystem(userData: {
+    email: string
+    full_name: string
+    role_id: string
+    department?: string
+    employee_id?: string
+  }): Promise<{success: boolean, data?: UserProfile, error?: string}> {
+    try {
+      // 1. Enviar Magic Link por email
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email: userData.email,
+        options: {
+          data: {
+            full_name: userData.full_name,
+            department: userData.department,
+            employee_id: userData.employee_id,
+            role_id: userData.role_id,
+            is_invitation: true
+          }
+        }
+      })
+
+      if (error) {
+        console.error('Error sending magic link:', error)
+        return { success: false, error: error.message }
+      }
+
+      // 2. Crear perfil temporal en user_profiles con estado PENDING
+      // Nota: El ID será generado cuando el usuario complete el registro
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          email: userData.email,
+          full_name: userData.full_name,
+          role_id: userData.role_id,
+          department: userData.department || null,
+          employee_id: userData.employee_id || null,
+          user_state: UserStatus.PENDING,
+          id: null // Se asignará cuando el usuario se registre
+        })
+        .select(`
+          *,
+          role:roles(
+            id,
+            name,
+            description,
+            permissions
+          )
+        `)
+        .single()
+
+      if (profileError) {
+        console.error('Error creating invited user profile:', profileError)
+        return { success: false, error: profileError.message }
+      }
+
+      return {
+        success: true,
+        data: profileData as UserProfile,
+        message: 'Se ha enviado un enlace mágico al email del usuario. Debe hacer clic en el enlace para completar su registro.'
+      }
+    } catch (error) {
+      console.error('Unexpected error inviting user:', error)
+      return { success: false, error: 'Error inesperado al invitar usuario' }
+    }
   }
 }
 

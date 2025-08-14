@@ -45,6 +45,11 @@
 | 2     | Eliminado | Soft delete, no mostrar en listas | 🔴 Rojo | ✅ Implementado |
 | 3     | Pendiente | Esperando aprobación (futuro) | 🔵 Azul | ✅ Implementado |
 
+### **Sistema de Permisos por Rol**
+- **`jp`**: Gestión de proyectos, registro de horas, asignación a proyectos
+- **`director`**: Todo lo de jp + supervisión de equipos, gestión de proyectos
+- **`admin`**: Acceso completo + gestión de usuarios, roles y sistema
+
 ## 🚀 Funcionalidades Implementadas
 
 ### **1. Dashboard Principal** ✅
@@ -53,6 +58,7 @@
 - **Estado del Sistema**: Indicadores de funcionamiento
 - **Acceso Rápido**: Botones para funciones principales
 - **Responsive Design**: Funciona en móvil y desktop
+- **Detección Automática de Roles**: Obtiene rol real desde base de datos
 
 ### **2. Gestión de Usuarios** ✅
 - **CRUD Completo**: Crear, leer, actualizar y eliminar usuarios
@@ -61,16 +67,24 @@
 - **Filtros Avanzados**: Filtrar por rol, estado y departamento
 - **Badges Visuales**: Estados claros con colores distintivos
 - **Modal de Usuario**: Formulario para crear/editar usuarios
+- **Creación de Usuarios con Supabase Auth**: 
+  - Usuario completo con contraseña (estado ACTIVE)
+  - Usuario invitado con Magic Link (estado PENDING)
+- **Integración Completa**: Perfiles sincronizados con Supabase Auth
 
 ### **3. Gestión de Proyectos** ✅
 - **CRUD de Proyectos**: Crear, editar y gestionar proyectos
 - **Estados de Proyecto**: Activo, Pausado, Completado, Cancelado
 - **Estado al Crear**: Selección de estado obligatoria al crear proyectos
 - **Fechas Opcionales**: Fechas de inicio y fin son opcionales y configurables
-- **Asignación de JPs**: Asignar Jefes de Proyecto a proyectos
+- **Asignación Universal de Usuarios**: **TODOS los roles pueden ser asignados a proyectos**
+  - JPs (Jefes de Proyecto)
+  - Directores
+  - Administradores
 - **Validación de Fechas**: Verificación automática de coherencia entre fechas
 - **Filtros por Estado**: Filtrar proyectos por su estado actual
 - **Badges Visuales**: Estados claros con colores e iconos distintivos
+- **Interfaz Actualizada**: Textos claros indicando "Usuarios Asignados" no solo "JPs"
 
 ### **4. Registro de Horas (TimeSheet)** ✅
 - **Registro Semanal**: Sistema de 40 horas por semana
@@ -80,12 +94,14 @@
 - **Cálculo Automático**: Total de horas y horas restantes
 - **Comentarios**: Notas adicionales por entrada de horas
 - **Validación**: Verificación de límites semanales
+- **Acceso Universal**: **TODOS los roles pueden ingresar horas** en proyectos asignados
 
 ### **5. Sistema de Roles y Permisos** ✅
 - **Roles Personalizables**: Definir roles con descripciones
 - **Permisos Granulares**: Sistema de permisos por funcionalidad
 - **Jerarquía de Roles**: Estructura organizacional clara
 - **Asignación Dinámica**: Cambiar roles de usuarios fácilmente
+- **Detección Automática**: Roles obtenidos desde base de datos en tiempo real
 
 ## 📊 Base de Datos
 
@@ -93,7 +109,7 @@
 - **`user_profiles`**: Perfiles de usuario con estados migrados
 - **`projects`**: Información de proyectos del sistema
 - **`time_entries`**: Registros de horas trabajadas
-- **`project_assignments`**: Asignaciones usuario-proyecto
+- **`project_assignments`**: Asignaciones usuario-proyecto (todos los roles)
 - **`roles`**: Definiciones de roles del sistema
 
 ### **Vistas Optimizadas**
@@ -106,6 +122,7 @@
 - **Índice en user_state**: Optimización de consultas por estado
 - **Constraints de validación**: Valores válidos para user_state
 - **Relaciones optimizadas**: Claves foráneas con integridad referencial
+- **Referencias a Auth**: `user_profiles.id` referenciando `auth.users.id`
 
 ## 🎨 Interfaz de Usuario
 
@@ -121,13 +138,13 @@
 
 ### **Componentes de Negocio**
 - **UserManagement**: Gestión completa de usuarios
-- **UserModal**: Modal para crear/editar usuarios
+- **UserModal**: Modal para crear/editar usuarios con opciones de creación
 - **UserStatusBadge**: Badge de estado de usuario
 - **RoleBadge**: Badge de rol de usuario
 - **ProjectManagement**: Gestión de proyectos
 - **ProjectModal**: Modal para proyectos con estado y fechas opcionales
 - **ProjectStatusBadge**: Badge de estado de proyecto con colores e iconos
-- **TimeSheet**: Registro de horas
+- **TimeSheet**: Registro de horas (accesible para todos los roles)
 - **TimeEntryModal**: Modal para entradas de tiempo
 - **DashboardLayout**: Layout principal del dashboard
 - **NavigationMenu**: Menú de navegación
@@ -137,19 +154,20 @@
 
 ### **Servicios Implementados**
 - **`authService`**: Autenticación y gestión de sesiones
-- **`userService`**: CRUD y gestión de usuarios
-- **`projectService`**: CRUD y gestión de proyectos
+- **`userService`**: CRUD y gestión de usuarios con Supabase Auth
+- **`projectService`**: CRUD y gestión de proyectos con asignación universal
 - **`timeEntryService`**: Gestión de entradas de tiempo
 - **`seedService`**: Datos de prueba y demostración
 - **`supabase`**: Cliente de base de datos
 
 ### **Funcionalidades de Servicio**
 - **Gestión de Sesiones**: Login, logout, persistencia
-- **CRUD de Usuarios**: Operaciones completas de usuario
+- **CRUD de Usuarios**: Operaciones completas de usuario con Auth
 - **Gestión de Estados**: Cambio de estados de usuario
-- **Asignación de Proyectos**: Relaciones usuario-proyecto
-- **Registro de Tiempo**: Entradas y cálculos de horas
+- **Asignación Universal de Proyectos**: **Todos los roles pueden ser asignados**
+- **Registro de Tiempo**: Entradas y cálculos de horas para todos los usuarios
 - **Validaciones**: Verificaciones de datos y permisos
+- **Detección de Roles**: Obtención automática desde base de datos
 
 ## 📱 Responsive Design
 
@@ -173,7 +191,7 @@
 - **Demostraciones**: Funciones para mostrar capacidades del sistema
 
 ### **Scripts de Verificación**
-- **`verify_migration.sql`**: Verificación de migración completada
+- **`verify_projects_db.sql`**: Verificación de base de datos de proyectos
 - **`testDatabase.ts`**: Pruebas de conectividad
 - **Funciones de Demo**: Demostración de funcionalidades
 
@@ -231,15 +249,12 @@
 
 ### **Archivos de Documentación**
 - **`README.md`**: Guía principal del proyecto
-- **`MIGRATION_SUMMARY.md`**: Resumen de la migración completada
-- **`MIGRATION_PLAN.md`**: Plan detallado de migración
-- **`MIGRATION_STATUS.md`**: Estado actual de la migración
 - **`PROJECT_STATUS.md`**: Este archivo de estado del proyecto
+- **`DATABASE_README.md`**: Documentación completa de la base de datos
 
 ### **Scripts SQL**
-- **`migrate_user_state.sql`**: Script de migración principal
-- **`verify_migration.sql`**: Verificación de migración
-- **`finalize_migration_fixed.sql`**: Limpieza final
+- **`database_schema.sql`**: Estructura completa de la base de datos
+- **`verify_projects_db.sql`**: Verificación de proyectos
 - **`enhance_user_status.sql`**: Mejoras adicionales (opcional)
 
 ## 🎯 Estado de Completitud
@@ -265,6 +280,28 @@
 - **Estado del Proyecto**: 100% ✅
 
 **PROGRESO TOTAL DEL PROYECTO: 100% COMPLETADO** 🏆
+
+## 🆕 **Nuevas Funcionalidades Implementadas**
+
+### **✅ Asignación Universal de Usuarios a Proyectos**
+- **Todos los roles** (jp, director, admin) pueden ser asignados a proyectos
+- **Interfaz actualizada** para mostrar "Usuarios Asignados" no solo "JPs"
+- **Servicios optimizados** para incluir todos los roles disponibles
+
+### **✅ Acceso Universal al Registro de Horas**
+- **Todos los usuarios asignados** pueden ingresar horas en proyectos
+- **Sin restricciones de rol** para el registro de tiempo
+- **Sistema flexible** para equipos multidisciplinarios
+
+### **✅ Sistema de Creación de Usuarios Mejorado**
+- **Creación directa** con Supabase Auth + contraseña
+- **Sistema de invitaciones** con Magic Link por email
+- **Integración completa** entre Auth y perfiles de usuario
+
+### **✅ Detección Automática de Roles**
+- **Roles obtenidos desde base de datos** en tiempo real
+- **Sin hardcoding** de permisos por email
+- **Sistema dinámico** de navegación por roles
 
 ## 📞 Soporte y Mantenimiento
 

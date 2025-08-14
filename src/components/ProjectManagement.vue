@@ -116,7 +116,7 @@ onMounted(() => {
               Estado
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              JPs Asignados
+              Usuarios Asignados
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Fechas
@@ -143,7 +143,7 @@ onMounted(() => {
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex -space-x-1">
                 <span class="text-sm text-gray-600">
-                  {{ project.assignments?.length || 0 }} JP(s)
+                  {{ project.assignments?.length || 0 }} usuario(s)
                 </span>
               </div>
             </td>

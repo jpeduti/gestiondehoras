@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -63,6 +63,13 @@ export type Database = {
             columns: ["jp_id"]
             isOneToOne: false
             referencedRelation: "users_deleted"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_assignments_jp_id_fkey"
+            columns: ["jp_id"]
+            isOneToOne: false
+            referencedRelation: "users_pending"
             referencedColumns: ["id"]
           },
           {
@@ -138,6 +145,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users_deleted"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users_pending"
             referencedColumns: ["id"]
           },
         ]
@@ -233,6 +247,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "time_entries_jp_id_fkey"
+            columns: ["jp_id"]
+            isOneToOne: false
+            referencedRelation: "users_pending"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "time_entries_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -249,7 +270,6 @@ export type Database = {
           employee_id: string | null
           full_name: string
           id: string
-          is_active: boolean | null
           role_id: string
           updated_at: string | null
           user_state: number | null
@@ -261,7 +281,6 @@ export type Database = {
           employee_id?: string | null
           full_name: string
           id: string
-          is_active?: boolean | null
           role_id: string
           updated_at?: string | null
           user_state?: number | null
@@ -273,7 +292,6 @@ export type Database = {
           employee_id?: string | null
           full_name?: string
           id?: string
-          is_active?: boolean | null
           role_id?: string
           updated_at?: string | null
           user_state?: number | null
@@ -298,7 +316,6 @@ export type Database = {
           employee_id: string | null
           full_name: string | null
           id: string | null
-          is_active: boolean | null
           role_id: string | null
           updated_at: string | null
           user_state: number | null
@@ -310,7 +327,6 @@ export type Database = {
           employee_id?: string | null
           full_name?: string | null
           id?: string | null
-          is_active?: boolean | null
           role_id?: string | null
           updated_at?: string | null
           user_state?: number | null
@@ -322,7 +338,6 @@ export type Database = {
           employee_id?: string | null
           full_name?: string | null
           id?: string | null
-          is_active?: boolean | null
           role_id?: string | null
           updated_at?: string | null
           user_state?: number | null
@@ -345,7 +360,6 @@ export type Database = {
           employee_id: string | null
           full_name: string | null
           id: string | null
-          is_active: boolean | null
           role_id: string | null
           updated_at: string | null
           user_state: number | null
@@ -357,7 +371,6 @@ export type Database = {
           employee_id?: string | null
           full_name?: string | null
           id?: string | null
-          is_active?: boolean | null
           role_id?: string | null
           updated_at?: string | null
           user_state?: number | null
@@ -369,7 +382,6 @@ export type Database = {
           employee_id?: string | null
           full_name?: string | null
           id?: string | null
-          is_active?: boolean | null
           role_id?: string | null
           updated_at?: string | null
           user_state?: number | null
@@ -392,7 +404,6 @@ export type Database = {
           employee_id: string | null
           full_name: string | null
           id: string | null
-          is_active: boolean | null
           role_id: string | null
           updated_at: string | null
           user_state: number | null
@@ -404,7 +415,6 @@ export type Database = {
           employee_id?: string | null
           full_name?: string | null
           id?: string | null
-          is_active?: boolean | null
           role_id?: string | null
           updated_at?: string | null
           user_state?: number | null
@@ -416,7 +426,50 @@ export type Database = {
           employee_id?: string | null
           full_name?: string | null
           id?: string | null
-          is_active?: boolean | null
+          role_id?: string | null
+          updated_at?: string | null
+          user_state?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users_pending: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string | null
+          employee_id: string | null
+          full_name: string | null
+          id: string | null
+          role_id: string | null
+          updated_at: string | null
+          user_state: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
+          role_id?: string | null
+          updated_at?: string | null
+          user_state?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string | null
+          employee_id?: string | null
+          full_name?: string | null
+          id?: string | null
           role_id?: string | null
           updated_at?: string | null
           user_state?: number | null
@@ -433,10 +486,7 @@ export type Database = {
       }
     }
     Functions: {
-      get_is_active: {
-        Args: { state: number }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

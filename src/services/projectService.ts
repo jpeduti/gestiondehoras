@@ -145,7 +145,7 @@ export const projectService = {
     }
   },
 
-  // Obtener JPs disponibles (usuarios con rol jp)
+  // Obtener usuarios disponibles para asignar a proyectos (todos los roles)
   async getAvailableJPs(): Promise<UserProfile[]> {
     const { data, error } = await supabase
       .from('user_profiles')
@@ -153,26 +153,31 @@ export const projectService = {
         *,
         role:roles(name)
       `)
-      .eq('user_state', 1) // 1 = ACTIVE (reemplaza is_active = true)
-      .eq('roles.name', 'jp')
+      .eq('user_state', 1) // 1 = ACTIVE
+      .in('roles.name', ['jp', 'director', 'admin']) // ✅ Todos los roles pueden ser asignados
 
     if (error) throw error
     return (data || []) as UserProfile[]
   },
 
-  // Obtener proyectos asignados a un JP específico
-  async getProjectsForJP(jpId: string): Promise<Project[]> {
+  // Obtener proyectos asignados a un usuario específico (cualquier rol)
+  async getProjectsForUser(userId: string): Promise<Project[]> {
     const { data, error } = await supabase
       .from('projects')
       .select(`
         *
       `)
-      .eq('project_assignments.jp_id', jpId)
-      .eq('project_assignments.is_active', true) // Este is_active SÍ existe en project_assignments
+      .eq('project_assignments.jp_id', userId)
+      .eq('project_assignments.is_active', true)
       .in('status', ['active', 'paused'])
 
     if (error) throw error
     return (data || []) as Project[]
+  },
+
+  // Alias para compatibilidad (mantener nombre anterior)
+  async getProjectsForJP(jpId: string): Promise<Project[]> {
+    return this.getProjectsForUser(jpId)
   },
 
   // Verificar si un código de proyecto ya existe

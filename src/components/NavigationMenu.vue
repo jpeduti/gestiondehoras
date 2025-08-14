@@ -16,7 +16,6 @@ import {
   Settings,
   Home,
   UserCheck,
-  PlusCircle,
   ChevronDown
 } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
@@ -51,6 +50,13 @@ const menuStructure = {
           { id: 'users', label: 'Usuarios', icon: Users, description: 'Gestionar usuarios y roles' },
           { id: 'projects', label: 'Proyectos', icon: FolderOpen, description: 'Administrar proyectos' },
           { id: 'settings', label: 'Configuración', icon: Settings, description: 'Configuración del sistema' }
+        ]
+      },
+      {
+        title: 'Mi Trabajo',
+        items: [
+          { id: 'timesheet', label: 'Registro de Horas', icon: Clock, description: 'Registrar horas trabajadas' },
+          { id: 'my-projects', label: 'Mis Proyectos', icon: FolderOpen, description: 'Proyectos asignados' }
         ]
       },
       {
@@ -91,7 +97,14 @@ const menuStructure = {
         title: 'Gestión',
         items: [
           { id: 'projects', label: 'Proyectos', icon: FolderOpen, description: 'Supervisar proyectos' },
-          { id: 'assignments', label: 'Asignaciones', icon: UserCheck, description: 'Asignar JPs a proyectos' }
+          { id: 'assignments', label: 'Asignaciones', icon: UserCheck, description: 'Asignar usuarios a proyectos' }
+        ]
+      },
+      {
+        title: 'Mi Trabajo',
+        items: [
+          { id: 'timesheet', label: 'Registro de Horas', icon: Clock, description: 'Registrar horas trabajadas' },
+          { id: 'my-projects', label: 'Mis Proyectos', icon: FolderOpen, description: 'Proyectos asignados' }
         ]
       },
       {
